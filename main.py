@@ -173,6 +173,7 @@ def tx_in_count(f:BufferedReader)->bool|int|str:
     b = f.read(1)
     tmpB = b.hex().upper()
     bInt = int(b.hex(),16)
+    tmpHex = ''
     if bInt == 0:
         tmpB = ''
         f.seek(1,1)
@@ -263,6 +264,10 @@ def find_inscription(fileName:str, zacatekWitness:str, inCount:str)->list:
         tmpHex = ''
 
         inscription = inscription[68:] ##smažu část witness - signature a OP_CHECKSIG
+        
+        ## z ničeho nic se to objevilo, zatím jsem nenašel co to má být, tak prostě přeskakuji
+        if inscription[0:2] == "06":
+            inscription = inscription[16:]
         ## zjistí, zda se jedná o inscriptions - shodný prefix
         if inscription[0:16] == "0063036F72640101":
             return extract_inscription(inscription)
