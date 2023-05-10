@@ -43,7 +43,7 @@ def read_varint(file:BufferedReader)->str:
     return data
 
 ##funguje stejně, jako předchozí. S tím rozdílem, že je třeba uchovat a returnnout všechna data - použita pro výpočet transaction hashe
-def read_varint_transaction(file:BufferedReader)->list:
+def read_varint_transaction(file:BufferedReader)->str:
     b = file.read(1)
     tmpB = b.hex().upper()
     bInt = int(b.hex(),16)
@@ -79,42 +79,39 @@ def find_block(blockHash:str)->list:
     ##nacte slozku a nasledne vsechny soubory do listu
     fList = os.listdir(DIR)
     fList = [x for x in fList if (x.endswith('.dat') and x.startswith('blk'))]
-    ##seřadí list sestupně - inscriptions budou spíše v novějších blocích
-    fList.sort(reverse=True)
+    fList.sort(reverse=True) ##seřadí list sestupně - inscriptions budou spíše v novějších blocích
     ## postupně projde všechny soubory
     for i in fList:
         ##otevře daný soubor
         nameSrc = i
-        t = DIR + nameSrc
-        f = open(t,'rb')
-        fSize = os.path.getsize(t)
+        f = open(DIR + nameSrc,'rb')
+        fSize = os.path.getsize(DIR + nameSrc)
         zacatekBloku = 0
         velikostBloku = 1
-        #prochází soubor, dokud nenarazí na konec souboru, nebo dokud nenajde hledaný blok - pokud najde, vrátí název souboru a pozici v něm, kde začíná hledaný blok
-        while f.tell() != fSize and velikostBloku != 0:
-            ##zacatek bloku
+        #prochází soubor (každý blok), dokud nenarazí na konec souboru, nebo dokud nenajde hledaný blok - pokud najde, vrátí název souboru a pozici v něm, kde začíná hledaný blok
+        while f.tell() != fSize and velikostBloku != 0: #velikost bloku pro to, že poslední soubor (ten do kterého se aktuálně zapisují nové bloky) mi to bez tohoto pravidla procházelo i po přečtení nejaktuálnějšího bloku - jednoduše to skákalo po 8 bajtech
             zacatekBloku = f.tell()
-            f.seek(zacatekBloku + 4) ##přeskočí magic number
-            
-            ##načte velikost bloku - konvertovaná do bajtů
-            velikostBloku = int(read_bytes(f,4), base=16)
-
-            ##vypocita hash bloku (jeho hlavicky - veliká 80 bajtů)
+            f.seek(zacatekBloku + 4) ##přeskočí magic number            
+            velikostBloku = int(read_bytes(f,4), base=16)##načte velikost bloku - konvertovaná do bajtů
             hlavickaBloku = read_bytes(f,80,'B')
-            hlavickaBloku = bytes.fromhex(hlavickaBloku)
-            hlavickaBloku = hashlib.new('sha256', hlavickaBloku).digest()
-            hlavickaBloku = hashlib.new('sha256', hlavickaBloku).digest()
-            hlavickaBloku = hlavickaBloku[::-1]        
-            hlavickaBloku = hlavickaBloku.hex().upper()
-            if hlavickaBloku.__eq__(blockHash):
+            hlavickaBlokuHash = hash_of_data(hlavickaBloku) #vypočítá hash nalezeného bloku
+            if hlavickaBlokuHash.__eq__(blockHash):
+                f.close()
                 return [i, str(zacatekBloku)]
-            taproot_activated_block(hlavickaBloku) #ověří, zda nebyl dosažen aktivační Taproot blok - pokud ano zastaví program
-            ##přesun na (konec bloku + 1) - není to přímo začátek dalšího bloku, před ním je ještě magic number a velikost bloku
-            f.seek(velikostBloku + zacatekBloku + 8,0)
-        f.close()
-        
-    ##pokud prošel všechny soubory a požadovaný blockhash nenalezl - neexistuje
-    raise Exception(f"Error: Non-exist block hash")
+            taproot_activated_block(hlavickaBlokuHash) #ověří, zda nebyl dosažen aktivační Taproot blok - pokud ano zastaví program
+            f.seek(velikostBloku + zacatekBloku + 8,0)#přesun na (konec bloku + 1) - není to přímo začátek dalšího bloku, před ním je ještě magic number a velikost bloku
+        f.close()          
+    raise Exception(f"Error: Non-exist block hash") ##pokud prošel všechny soubory a požadovaný blockhash nenalezl - neexistuje
+
+#přečte hlavičku bloku a vypočítá block hash
+def hash_of_data(data:str)->str:
+    ##vypocita hash bloku (jeho hlavicky - veliká 80 bajtů)
+    data = bytes.fromhex(data)
+    data = hashlib.new('sha256', data).digest()
+    data = hashlib.new('sha256', data).digest()
+    data = data[::-1]        
+    data = data.hex().upper()
+    return data
 
 #kontroluje, zda nalezený blok neodpovídá prvnímu taproot bloku - díky taprootu jsou možné inscriptions
 def taproot_activated_block(blockHash:str)->None:
@@ -136,104 +133,113 @@ def find_transaction(fileName:str, zacatekBloku:str, txHash:str)->list:
 
     for k in range(txCount):
         RawTX = reverse(read_bytes(f,4)) ## obsahuje TX version number
+        Witness, inCount, tmpHex = tx_in_count(f) ##zjistí počet vstupů do transakce, vyhodnotí případný segwit flag a zároveň vrátí i hodnotu pro RawTX
+        RawTX += reverse(tmpHex)
 
-        ##segwit marker - šlo by použít read_varint_transaction(f), ale díky tomu že může obsahovat '00' - segwit marker - dělám to odděleně; je zde if navíc
-        Witness = False
-        b = f.read(1)
-        tmpB = b.hex().upper()
-        bInt = int(b.hex(),16)
-        if bInt == 0:
-            tmpB = ''
-            f.seek(1,1)
-            c = f.read(1)
-            bInt = int(c.hex(),16)
-            tmpB = c.hex().upper()
-            Witness = True
-        if bInt < 253:
-            c = 1
-            tmpHex = hex(bInt)[2:].upper().zfill(2)
-            tmpB = ''
-        if bInt == 253: c = 3
-        if bInt == 254: c = 5
-        if bInt == 255: c = 9
-        for j in range(1,c):
-            b = f.read(1)
-            b = b.hex().upper()
-            tmpHex = b + tmpHex
-            
-        inCount = int(tmpHex,16)## obsahuje počet vstupů do transakce
-        
-        tmpHex = tmpHex + tmpB
-        RawTX = RawTX + reverse(tmpHex)
-
-        ## projdou se všechny vstupy
+        ## projdou se všechny vstupy a přidají se do RawTX
         for m in range(inCount):
-            ## txid (hash) předchozí tx
-            tmpHex = read_bytes(f,32) 
-            RawTX = RawTX + reverse(tmpHex)
-            ## index výstupu předchozí tx
-            tmpHex = read_bytes(f,4)                
-            RawTX = RawTX + reverse(tmpHex)
-            ##v předsegwitových tx je na tomto místě podpisový skript, zde prázdné - je ve witness
-            tmpHex = ''
-            tmpHex, tmpB = read_varint_transaction(f)
-                
-            scriptLength = int(tmpHex,16)
-            tmpHex = tmpHex + tmpB
-            RawTX = RawTX + reverse(tmpHex)
-            tmpHex = read_bytes(f,scriptLength,'B')
-            RawTX = RawTX + tmpHex
-            ## sequence - časový zámek/RBF
-            tmpHex = read_bytes(f,4,'B')
-            RawTX = RawTX + tmpHex
-            tmpHex = ''
+            RawTX += read_tx_in(f)
+
         ## zde se zjišťuje počet outputů
         tmpHex, tmpB = read_varint_transaction(f)
-
         outputCount = int(tmpHex,16)
-        tmpHex = tmpHex + tmpB
-        RawTX = RawTX + reverse(tmpHex)
+        RawTX += reverse(tmpHex + tmpB)
+
         ## projdou se všechny výstupy transakce
         for m in range(outputCount):
-            ## value v sat
-            tmpHex = read_bytes(f,8)
-            ## následující část čte scriptPubKey
-            RawTX = RawTX + reverse(tmpHex)
-            tmpHex = ''
-            tmpHex, tmpB = read_varint_transaction(f)
+            RawTX += read_tx_out(f)
 
-            scriptLength = int(tmpHex,16)
-            tmpHex = tmpHex + tmpB
-            RawTX = RawTX + reverse(tmpHex)
-            tmpHex = read_bytes(f,scriptLength,'B')
-            RawTX = RawTX + tmpHex
-            tmpHex = ''
         zacatekWitness = f.tell()
         ##postupně přeskočí celou witness část transakce
         if Witness == True:
-            for m in range(inCount): ##pro každý vstup
-                WitnessLength = int(read_varint(f),16) ##zjistí počet prvků ve witness
-                for j in range(WitnessLength): #pro každý prvek ve witness
-                    WitnessItemLength = int(read_varint(f),16) ##zjistí délku prvku
-                    f.seek(WitnessItemLength, 1) ##přeskočí celý witness prvek
+            skip_witness(f, inCount)
 
-        RawTX = RawTX + reverse(read_bytes(f,4)) ##hodnota Lock time, reversnutá a přidaná
-        ## z Raw tx udělá její hash
-        RawTX = bytes.fromhex(RawTX)
-        RawTX = hashlib.new('sha256', RawTX).digest()
-        RawTX = hashlib.new('sha256', RawTX).digest()
-        RawTX = RawTX[::-1]
-        RawTX = RawTX.hex().upper()
+        RawTX += reverse(read_bytes(f,4)) ##hodnota Lock time, reversnutá a přidaná
+        RawTXHash = hash_of_data(RawTX)        ## z Rawtx udělá její hash
 
         ## zjistí, zda nalezl správnou transakci
-        if txHash == RawTX:
+        if txHash == RawTXHash:
             if Witness == True:
                 f.close()
-                return [zacatekWitness, inCount] ##RawTX 
+                return [zacatekWitness, inCount] 
             else:
                 raise Exception(f"Error: The entered transaction does not contain the witness part")
     f.close()
     raise Exception(f"Error: Non-exist TX hash in this block")
+
+##zjistí počet vstupů do transakce, vyhodnotí případný segwit flag a zároveň vrátí i hodnotu pro RawTX
+def tx_in_count(f:BufferedReader)->bool|int|str:
+    Witness = False
+    b = f.read(1)
+    tmpB = b.hex().upper()
+    bInt = int(b.hex(),16)
+    if bInt == 0:
+        tmpB = ''
+        f.seek(1,1)
+        c = f.read(1)
+        bInt = int(c.hex(),16)
+        tmpB = c.hex().upper()
+        Witness = True
+    if bInt < 253:
+        c = 0
+        tmpHex = hex(bInt)[2:].upper().zfill(2)
+        tmpB = ''
+    if bInt == 253: c = 2
+    if bInt == 254: c = 4
+    if bInt == 255: c = 8
+    for j in range(0,c):
+        b = f.read(1)
+        b = b.hex().upper()
+        tmpHex = b + tmpHex
+        
+    inCount = int(tmpHex,16)## obsahuje počet vstupů do transakce
+    
+    tmpHex = tmpHex + tmpB
+    return Witness, inCount, tmpHex
+
+#přeskočí celou witness část dat při průchodu transakcí
+def skip_witness(f:BufferedReader, inCount:int)->None:
+    for m in range(inCount): ##pro každý vstup
+        WitnessLength = int(read_varint(f),16) ##zjistí počet prvků ve witness
+        for j in range(WitnessLength): #pro každý prvek ve witness
+            WitnessItemLength = int(read_varint(f),16) ##zjistí délku prvku
+            f.seek(WitnessItemLength, 1) ##přeskočí celý witness prvek
+
+#projde celý vstup transakce a vrátí jeho data pro použití v RawTX
+def read_tx_in(f:BufferedReader)->str:
+    tmpHex = read_bytes(f,32) ## txid (hash) předchozí tx
+    RawTX = reverse(tmpHex)
+    
+    tmpHex = read_bytes(f,4) ## index výstupu předchozí tx            
+    RawTX += reverse(tmpHex)
+    ##v předsegwitových tx je na tomto místě podpisový skript, zde prázdné - je ve witness -> načte tuto část
+    tmpHex, tmpB = read_varint_transaction(f)
+        
+    scriptLength = int(tmpHex,16)
+    tmpHex = tmpHex + tmpB
+    RawTX += reverse(tmpHex)
+    tmpHex = read_bytes(f,scriptLength,'B')
+    RawTX += tmpHex
+    ## sequence - časový zámek/RBF
+    tmpHex = read_bytes(f,4,'B')
+    RawTX += tmpHex
+    return RawTX
+
+def read_tx_out(f:BufferedReader)->str:
+    ## value v sat
+    tmpHex = read_bytes(f,8)
+    ## následující část čte scriptPubKey
+    RawTX = reverse(tmpHex)
+    tmpHex = ''
+    tmpHex, tmpB = read_varint_transaction(f)
+
+    scriptLength = int(tmpHex,16)
+    tmpHex = tmpHex + tmpB
+    RawTX = RawTX + reverse(tmpHex)
+    tmpHex = read_bytes(f,scriptLength,'B')
+    RawTX = RawTX + tmpHex
+    tmpHex = ''
+    return RawTX
 
 ##projde všechna witness transakce, pokusí se najít správné - rozhoduje dle prefixu odpovídajícímu inscription
 def find_inscription(fileName:str, zacatekWitness:str, inCount:str)->list:
