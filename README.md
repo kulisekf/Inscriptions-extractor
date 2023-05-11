@@ -34,5 +34,5 @@
     - extracting inscription data from witness - data type and data itself
     - save to file based on data type
 - thanks to the division into several logical parts, the program can be easily modified to serve, for example, as a data parser or to search for other, specific values within a transaction or block
-- jednotlivé části a funkce obsahují velké množství komentářů, které napomáhají pochopení funkce části kódu a také s jakými daty určitá část pracuje
+- individual parts and functions contain a large number of comments that help to understand the function of a part of the code and also what data a certain part works with
     - NOTICE: all comments are in the Czech language
