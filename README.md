@@ -6,7 +6,7 @@
 - prerequisites
     - python version 3
     - the application uses the modules hashlib, os, sys, io and argparse - all of them should be part of python 3 by default
-    - bitcoin-core - application directly uses blkXXXXX.dat files, you need to have direct access to these files
+    - bitcoin-core - application directly uses blkXXXXX.dat files, you need to have direct access to these files 
 
 - run the file main.py
     - when running through the terminal, it requires 2 mandatory arguments: 

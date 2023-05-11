@@ -354,7 +354,7 @@ def what_to_find()->list:
     if len(args.txHash) != 64:
         raise Exception(f"Error: Wrong txHash value was entered! The hash length does not conform to the standard")
     return [args.blkHash.upper(), args.txHash.upper(), DIR, args.resDir]
-
+ 
 def main():
     try:
         coordinates = what_to_find() ##list blockhash, transaction hash
