@@ -1,21 +1,8 @@
-##https://github.com/ragestack/blockchain-parser
-
 import os
 import hashlib
 import sys
 from io import BufferedReader
 import argparse
-
-parser = argparse.ArgumentParser(description='Extract inxcription from block')
-
-parser.add_argument('-blkHash', required=True, help="hash of block with inscription transaction (required)")
-parser.add_argument('-txHash', required=True, help="transaction hash of transaction with inscription (required)")
-parser.add_argument('-blkDir', default='./.bitcoin/blocks', help="path to the block folder (default: './.bitcoin/blocks')")
-parser.add_argument('-resDir', default='./', help="path to the folder for file save (default: './')")
-
-args = parser.parse_args()
-
-DIR = args.blkDir + "/"
 
 ##přečte určitý počet bajtů, změní little-endian notaci na notmální
 def read_bytes(file:BufferedReader,n:int,byte_order:str = 'L')->str:
@@ -75,7 +62,7 @@ def reverse(input:str)->str:
             T = ''
         return Res
 
-def find_block(blockHash:str)->list:
+def find_block(blockHash:str, DIR:str)->list:
     ##nacte slozku a nasledne vsechny soubory do listu
     fList = os.listdir(DIR)
     fList = [x for x in fList if (x.endswith('.dat') and x.startswith('blk'))]
@@ -126,11 +113,10 @@ def taproot_activated_block(blockHash:str)->None:
 
 ##pokusí se najít zadanou transakci. Pokus ji nenajde, vrátí text chyby, pokud ji najde a transakce obsahuje
 #witness, vrátí lokaci witness a počet vstupů, pokud witness nebosahuje vrátí text chyby
-def find_transaction(fileName:str, zacatekBloku:str, txHash:str)->list:
+def find_transaction(fileName:str, zacatekBloku:str, txHash:str, DIR:str)->list:
     f = open(DIR + fileName,'rb') ##otevře správný soubor
     f.seek(int(zacatekBloku) + 8 + 80) ##přeskočí na začátek bloku, následně za magicnumber a size a nakonec za celou hlavičku - následuje pro čtení hodnota tx count
     txCount = int(read_varint(f),16)##zjisti mnozstvi transakci v bloku - převede z hexadecimal na decimal
-
     for k in range(txCount):
         RawTX = reverse(read_bytes(f,4)) ## obsahuje TX version number
         Witness, inCount, tmpHex = tx_in_count(f) ##zjistí počet vstupů do transakce, vyhodnotí případný segwit flag a zároveň vrátí i hodnotu pro RawTX
@@ -243,7 +229,7 @@ def read_tx_out(f:BufferedReader)->str:
     return RawTX
 
 ##projde všechna witness transakce, pokusí se najít správné - rozhoduje dle prefixu odpovídajícímu inscription
-def find_inscription(fileName:str, zacatekWitness:str, inCount:str)->list:
+def find_inscription(fileName:str, zacatekWitness:str, inCount:str, DIR:str)->list:
     f = open(DIR + fileName,'rb')
     f.seek(zacatekWitness)
     inscription = ""
@@ -300,74 +286,82 @@ def length_reader(inscription:str)->int:
         return int(reverse(inscription[0:2]), 16), 2
 
 ##zjistí typ inscriptions a uloží ho do správného souboru
-def save_inscription(type:str, inscription:str)->None:
+def save_inscription(type:str, inscription:str, result_dir:str)->None:
     if type.__eq__('6170706C69636174696F6E2F6A617661736372697074'): #application/javascript
-        save_file("js", bytes.fromhex(inscription)) 
+        save_file("js", bytes.fromhex(inscription), result_dir) 
     if type.__eq__('6170706C69636174696F6E2F6A736F6E'): #application/json
-        save_file("json", bytes.fromhex(inscription)) 
+        save_file("json", bytes.fromhex(inscription), result_dir) 
     elif type.__eq__('6170706C69636174696F6E2F706466'): #application/pdf
-        save_file("pdf", bytes.fromhex(inscription)) 
+        save_file("pdf", bytes.fromhex(inscription), result_dir) 
     elif type.__eq__('6170706C69636174696F6E2F7067702D7369676E6174757265'): #application/pgp-signature
-        save_file("sig", bytes.fromhex(inscription)) 
+        save_file("sig", bytes.fromhex(inscription), result_dir) 
     elif type.__eq__('6170706C69636174696F6E2F79616D6C'): #application/yaml
-        save_file("yaml", bytes.fromhex(inscription)) 
+        save_file("yaml", bytes.fromhex(inscription), result_dir) 
     elif type.__eq__('617564696F2F666C6163'): #audio/flac
-        save_file("flac", bytes.fromhex(inscription)) 
+        save_file("flac", bytes.fromhex(inscription), result_dir) 
     elif type.__eq__('617564696F2F6D706567'): #audio/mpeg
-        save_file("mpg", bytes.fromhex(inscription)) 
+        save_file("mpg", bytes.fromhex(inscription), result_dir) 
     elif type.__eq__('617564696F2F776176'): #audio/wav
-        save_file("wav", bytes.fromhex(inscription)) 
+        save_file("wav", bytes.fromhex(inscription), result_dir) 
     elif type.__eq__('696D6167652F61706E67'): #image/apng
-        save_file("apng", bytes.fromhex(inscription)) 
+        save_file("apng", bytes.fromhex(inscription), result_dir) 
     elif type.__eq__('696D6167652F61766966'): #image/avif
-        save_file("avif", bytes.fromhex(inscription)) 
+        save_file("avif", bytes.fromhex(inscription), result_dir) 
     elif type.__eq__('696D6167652F676966'): #image/gif
-        save_file("gif", bytes.fromhex(inscription)) 
+        save_file("gif", bytes.fromhex(inscription), result_dir) 
     elif type.__eq__('696D6167652F6A706567'): #image/jpeg
-        save_file("jpeg", bytes.fromhex(inscription)) 
+        save_file("jpeg", bytes.fromhex(inscription), result_dir) 
     elif type.__eq__('696D6167652F6A7067'): #image/jpg
-        save_file("jpg", bytes.fromhex(inscription)) 
+        save_file("jpg", bytes.fromhex(inscription), result_dir) 
     elif type.__eq__('696D6167652F706E67'): #image/png
-        save_file("png", bytes.fromhex(inscription)) 
+        save_file("png", bytes.fromhex(inscription), result_dir) 
     elif type.__eq__('696D6167652F7376672B786D6C'): #image/svg+xml
-        save_file("svg", bytes.fromhex(inscription)) 
+        save_file("svg", bytes.fromhex(inscription), result_dir) 
     elif type.__eq__('696D6167652F77656270'): #image/webp
-        save_file("webp", bytes.fromhex(inscription)) 
+        save_file("webp", bytes.fromhex(inscription), result_dir) 
     elif type.__eq__('6D6F64656C2F676C74662D62696E617279'): #model/gltf-binary
-        save_file("gltf", bytes.fromhex(inscription)) 
+        save_file("gltf", bytes.fromhex(inscription), result_dir) 
     elif type.__eq__('6D6F64656C2F73746C'): #model/stl
-        save_file("stl", bytes.fromhex(inscription)) 
+        save_file("stl", bytes.fromhex(inscription), result_dir) 
     elif type.__eq__('746578742F68746D6C3B636861727365743D7574662D38'): #text/html;charset=utf-8
-        save_file("html", bytes.fromhex(inscription)) 
+        save_file("html", bytes.fromhex(inscription), result_dir) 
     elif type.__eq__('746578742F706C61696E3B636861727365743D7574662D38'): #text/plain;charset=utf-8
-        save_file("txt", bytes.fromhex(inscription)) 
+        save_file("txt", bytes.fromhex(inscription), result_dir) 
     elif type.__eq__('766964656F2F6D7034'): #video/mp4
-        save_file("mp4", bytes.fromhex(inscription)) 
+        save_file("mp4", bytes.fromhex(inscription), result_dir) 
     elif type.__eq__('766964656F2F7765626D'): #video/webm
-        save_file("webm", bytes.fromhex(inscription)) 
+        save_file("webm", bytes.fromhex(inscription), result_dir) 
     else:
         data = bytes("!!!unknown type of content!!!\n\ntype: ",'UTF-8') + bytes.fromhex(type) + bytes("\n\ninscription data: " + inscription,'UTF-8')
-        save_file("txt", bytes.fromhex(data)) 
+        save_file("txt", data, result_dir) 
     
-def save_file(suffix:str,data:bytes)->None:
-    result_dir = args.resDir + '/'
-    with open(result_dir + 'inscription.' + suffix, 'wb') as file:
+def save_file(suffix:str, data:bytes, result_dir:str)->None:
+    with open(result_dir + '/inscription.' + suffix, 'wb') as file:
             file.write(data)
 
 def what_to_find()->list:
+    parser = argparse.ArgumentParser(description='Extract inxcription from block')
+
+    parser.add_argument('-blkHash', required=True, help="hash of block with inscription transaction (required)")
+    parser.add_argument('-txHash', required=True, help="transaction hash of transaction with inscription (required)")
+    parser.add_argument('-blkDir', default='./.bitcoin/blocks', help="path to the block folder (default: './.bitcoin/blocks')")
+    parser.add_argument('-resDir', default='./', help="path to the folder for file save (default: './')")
+    args = parser.parse_args()
+    DIR = args.blkDir + "/"
+
     if len(args.blkHash) != 64:
         raise Exception(f"Error: Wrong blkHash value was entered! The hash length does not conform to the standard")
     if len(args.txHash) != 64:
         raise Exception(f"Error: Wrong txHash value was entered! The hash length does not conform to the standard")
-    return [args.blkHash.upper(), args.txHash.upper()]
+    return [args.blkHash.upper(), args.txHash.upper(), DIR, args.resDir]
 
 def main():
     try:
         coordinates = what_to_find() ##list blockhash, transaction hash
-        whereIsBlock = find_block(coordinates[0]) ## list nazev souboru .blk ve kterem je hlevany blok, pozice kde blok zacina (pred magicnumber a size)
-        whereIsTransactionWitness = find_transaction(whereIsBlock[0], whereIsBlock[1], coordinates[1]) ##najde zacatek transakce
-        finalInscription = find_inscription(whereIsBlock[0], whereIsTransactionWitness[0], whereIsTransactionWitness[1])
-        save_inscription(finalInscription[0], finalInscription[1])
+        whereIsBlock = find_block(coordinates[0], coordinates[2]) ## list nazev souboru .blk ve kterem je hlevany blok, pozice kde blok zacina (pred magicnumber a size)
+        whereIsTransactionWitness = find_transaction(whereIsBlock[0], whereIsBlock[1], coordinates[1], coordinates[2]) ##najde zacatek transakce
+        finalInscription = find_inscription(whereIsBlock[0], whereIsTransactionWitness[0], whereIsTransactionWitness[1], coordinates[2])
+        save_inscription(finalInscription[0], finalInscription[1], coordinates[3])
     except Exception as e:
         print(str(e))
 
