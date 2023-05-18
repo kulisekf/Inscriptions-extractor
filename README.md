@@ -12,7 +12,7 @@
     - when running through the terminal, it requires 2 mandatory arguments: 
         - -blkHash BLKHASH -> hash of block with inscription transaction
         - -txHash TYHASH -> transaction hash of transaction with inscription
-    - umožňuje zadání 2 volitelných parametrů: 
+    - allows input of 2 optional parameters: 
         - -blkDir BLKDIR -> path to the block folder (default: './.bitcoin/blocks')
         - -resDir RESDIR -> path to the folder for file save (defpříault: './')
     - example:

@@ -6,14 +6,34 @@ import argparse
 
 ##přečte určitý počet bajtů, změní little-endian notaci na notmální
 def read_bytes(file:BufferedReader,n:int,byte_order:str = 'L')->str:
+    """
+    This function reads the specified number of bytes and also changes the notation from little-endian to classic by default
+
+        :param BufferedReader file: File to read data (bytes)
+        :param int n: Number of bytes to read
+        :param str byte_order: Specifies endianity - default "L" (little-endian)
+
+        :returns: read bytes in big-endian (classical) notation format
+
+        :rtype: str
+    """
     data = file.read(n)
     if byte_order == 'L':
         data = data[::-1]
     data = data.hex().upper()
     return data
 
-##bajt může značit více věcí - zde se rozhoduje, zda samotný bajt je výsledná hodnota, či zda značí kolik následujících bajtů hodnotu obsahuje
+##bajt dat může značit více věcí - zde se rozhoduje, zda samotný bajt je výsledná požadovaná hodnota, či zda značí kolik následujících bajtů hodnotu obsahuje a až následně načte tuto hodnotu
 def read_varint(file:BufferedReader)->str:
+    """
+    This function reads one byte of data and decides whether this byte contains the searched data, or whether it contains information on how many subsequent bytes contain the searched data, which it then reads
+
+        :param BufferedReader file: File to read data (bytes)
+
+        :returns: value stored in one or more (2, 4, 8) bytes of data
+
+        :rtype: str
+    """
     b = file.read(1)
     bInt = int(b.hex(),16)
     data = ''
@@ -31,6 +51,15 @@ def read_varint(file:BufferedReader)->str:
 
 ##funguje stejně, jako předchozí. S tím rozdílem, že je třeba uchovat a returnnout všechna data - použita pro výpočet transaction hashe
 def read_varint_transaction(file:BufferedReader)->str:
+    """
+    This function works in the same way as the read_variant() function, with the only difference that it needs to store and return all the data it works with - it is used, for example, to calculate the transaction hash
+        
+        :param BufferedReader file: File to read data (bytes)
+
+        :returns: all the loaded data that the function worked with
+
+        :rtype: str
+    """
     b = file.read(1)
     tmpB = b.hex().upper()
     bInt = int(b.hex(),16)
@@ -50,6 +79,15 @@ def read_varint_transaction(file:BufferedReader)->str:
 
 ##z little-endian stringu udělá big-endian
 def reverse(input:str)->str:
+    """
+    This function turns a little-endian string into big-endian        
+        
+        :param str input: Data sequence to change endianity
+
+        :returns: Data with changed endianness
+
+        :rtype: str
+    """
     L = len(input)
     if (L % 2) != 0:
         return None
@@ -63,6 +101,16 @@ def reverse(input:str)->str:
         return Res
 
 def find_block(blockHash:str, DIR:str)->list:
+    """
+    This function goes through the blkXXXX.dat files and searches them for the required block based on the block hash value      
+        
+        :param str blockHash: Hash of the block to be found by the function - it is entered when starting the program within the console
+        :param str DIR: The path to the folder that contains the blkXXXX.dat files (absolute/relative - preferred) - it is entered when starting the program within the console
+
+        :returns: A list containing 2 values. The value at index 0 contains the name of the blkXXX.dat file in which the searched block is located, the value at index 1 contains the position in the file where the data of the searched block begins (even before the magic number and block size)
+
+        :rtype: list of strings
+    """
     ##nacte slozku a nasledne vsechny soubory do listu
     fList = os.listdir(DIR)
     fList = [x for x in fList if (x.endswith('.dat') and x.startswith('blk'))]
@@ -90,8 +138,17 @@ def find_block(blockHash:str, DIR:str)->list:
         f.close()          
     raise Exception(f"Error: Non-exist block hash") ##pokud prošel všechny soubory a požadovaný blockhash nenalezl - neexistuje
 
-#přečte hlavičku bloku a vypočítá block hash
+#vypočítá hash vstupních dat
 def hash_of_data(data:str)->str:
+    """
+    This function calculates a 2x sha256 hash of the input data     
+        
+        :param str data: input data whose hash is to be calculated
+
+        :returns: 2x sha256 hash of input data
+
+        :rtype: str
+    """
     ##vypocita hash bloku (jeho hlavicky - veliká 80 bajtů)
     data = bytes.fromhex(data)
     data = hashlib.new('sha256', data).digest()
@@ -100,8 +157,15 @@ def hash_of_data(data:str)->str:
     data = data.hex().upper()
     return data
 
-#kontroluje, zda nalezený blok neodpovídá prvnímu taproot bloku - díky taprootu jsou možné inscriptions
+#kontroluje, zda nalezený blok odpovídá prvnímu taproot bloku - díky taprootu jsou možné inscriptions
 def taproot_activated_block(blockHash:str)->None:
+    """
+    This function checks whether the found block corresponds to the first taproot block - inscriptions are possible thanks to taproot   
+        
+        :param str blockHash: block Hash to be compared with the hash of the activation taproot block
+
+        :returns: None - if a matching block hash is found, the user is asked through the console whether the program should continue the evaluation or whether it should end (it is necessary to enter the value Y/N in the console)
+    """
     if blockHash == '0000000000000000000687BCA986194DC2C1F949318629B44BB54EC0A94D8244':
         print("Block 709,632 reached (Taproot activated block), continue search? (Y/N)")
         stop = str(input())
@@ -114,6 +178,18 @@ def taproot_activated_block(blockHash:str)->None:
 ##pokusí se najít zadanou transakci. Pokus ji nenajde, vrátí text chyby, pokud ji najde a transakce obsahuje
 #witness, vrátí lokaci witness a počet vstupů, pokud witness nebosahuje vrátí text chyby
 def find_transaction(fileName:str, zacatekBloku:str, txHash:str, DIR:str)->list:
+    """
+    This function goes through the individual transactions of the block and tries to find the specified transaction   
+        
+        :param str fileName: The name of the file where the transaction should be located
+        :param str zacatekBloku: The position in the blkXXX.dat file where the data of the block in which the transaction should be located begins
+        :param str txHash: Hash of the searched transaction - it is entered when starting the program within the console
+        :param str DIR: The path to the folder that contains the blkXXXX.dat files (absolute/relative - preferred) - it is entered when starting the program within the console
+
+        :returns: In case of successful transaction finding + if the transaction contains a witness part return list containing 2 values. The value at index 0 contains the position in the file where the witness part of the data of the searched transaction begins, the value at index 1 contains number of transaction inputs (for subsequent correct evaluation of the witness part)
+
+        :rtype: list of strings    
+    """
     f = open(DIR + fileName,'rb') ##otevře správný soubor
     f.seek(int(zacatekBloku) + 8 + 80) ##přeskočí na začátek bloku, následně za magicnumber a size a nakonec za celou hlavičku - následuje pro čtení hodnota tx count
     txCount = int(read_varint(f),16)##zjisti mnozstvi transakci v bloku - převede z hexadecimal na decimal
@@ -154,7 +230,16 @@ def find_transaction(fileName:str, zacatekBloku:str, txHash:str, DIR:str)->list:
     raise Exception(f"Error: Non-exist TX hash in this block")
 
 ##zjistí počet vstupů do transakce, vyhodnotí případný segwit flag a zároveň vrátí i hodnotu pro RawTX
-def tx_in_count(f:BufferedReader)->bool|int|str:
+def tx_in_count(f:BufferedReader)->object:
+    """
+    This function detects the number of inputs to the transaction, evaluates any segwit flag, and at the same time returns a value for building RawTX  
+        
+        :param f BufferedReader: File to read data (bytes)
+
+        :returns: Returns a total of 3 values - 1. value is witness identifier (True/False); 2. value is number of inputs; 3. value is all the loaded data that the function worked with
+
+        :rtype: bool, int, str 
+    """
     Witness = False
     b = f.read(1)
     tmpB = b.hex().upper()
@@ -186,6 +271,15 @@ def tx_in_count(f:BufferedReader)->bool|int|str:
 
 #přeskočí celou witness část dat při průchodu transakcí
 def skip_witness(f:BufferedReader, inCount:int)->None:
+    """
+    This function value is all read and skips the entire witness part of the data when passing the transactional data with which the function worked  
+        
+        :param f BufferedReader: The file from which the data is read
+        :param int inCount: Number of transaction inputs - for the witness part to pass correctly, it is necessary to know how many inputs it contains data for
+
+        :returns: None
+
+    """
     for m in range(inCount): ##pro každý vstup
         WitnessLength = int(read_varint(f),16) ##zjistí počet prvků ve witness
         for j in range(WitnessLength): #pro každý prvek ve witness
@@ -194,6 +288,15 @@ def skip_witness(f:BufferedReader, inCount:int)->None:
 
 #projde celý vstup transakce a vrátí jeho data pro použití v RawTX
 def read_tx_in(f:BufferedReader)->str:
+    """
+    This function loops through the entire transaction input and returns its data for build RawTX  
+        
+        :param f BufferedReader: File to read data (bytes)
+
+        :returns: used for build RawTX
+
+        :rtype: str
+    """
     tmpHex = read_bytes(f,32) ## txid (hash) předchozí tx
     RawTX = reverse(tmpHex)
     
@@ -213,6 +316,15 @@ def read_tx_in(f:BufferedReader)->str:
     return RawTX
 
 def read_tx_out(f:BufferedReader)->str:
+    """
+    This function loops through the entire transaction output and returns its data for build RawTX  
+        
+        :param f BufferedReader: File to read data (bytes)
+
+        :returns: used for build RawTX
+
+        :rtype: str
+    """
     ## value v sat
     tmpHex = read_bytes(f,8)
     ## následující část čte scriptPubKey
@@ -230,6 +342,15 @@ def read_tx_out(f:BufferedReader)->str:
 
 ##projde všechna witness transakce, pokusí se najít správné - rozhoduje dle prefixu odpovídajícímu inscription
 def find_inscription(fileName:str, zacatekWitness:str, inCount:str, DIR:str)->list:
+    """
+    This function loops through the entire transaction output and returns its data for build RawTX  
+        
+        :param f BufferedReader: File to read data (bytes)
+
+        :returns: used for build RawTX
+
+        :rtype: str
+    """
     f = open(DIR + fileName,'rb')
     f.seek(zacatekWitness)
     inscription = ""
@@ -261,6 +382,15 @@ def find_inscription(fileName:str, zacatekWitness:str, inCount:str, DIR:str)->li
 
 ##pokud se ve witness datech podařilo najít část s inscriptions, projde zbytek a vyextrahuje čistě inscription data zde uložená
 def extract_inscription(inscription:str)->list:
+    """
+    This function is used if a part with inscriptions was found in the witness - it goes through the rest and extracts purely the inscription data stored here
+        
+        :param inscription str: string with the witness data part that contains the inscription data
+
+        :returns: A list containing 2 values. The value at index 0 contains type of inscription data, the value at index 1 contains the inscription data itself
+
+        :rtype: list of strings
+    """
     inscription = inscription[16:] ##odstraním prefix
     typeLength = int(inscription[0:2], base=16)*2+2 ##zjistim si délku popisu typu obsahu
     type = inscription[2:typeLength]  ##nactu typ obsahu
@@ -277,6 +407,15 @@ def extract_inscription(inscription:str)->list:
 
 ##zjistí, kolik bajtů obsahuje data + kolik bajtů nese tuto informaci
 def length_reader(inscription:str)->int:
+    """
+    This function is used to read the inscription data from the witness - it finds out how many bytes the data contains + how many bytes carry this information
+        
+        :param inscription str: string with the witness data part that contains the inscription data
+
+        :returns: A list containing 2 values. The value at index 0 contains number of bytes that indicated, how many bytes contain inscription data in hex format, the value at index 1 contains the number of bytes that carry information on how many subsequent bytes contain inscription data (these bytes do not contain the inscription data itself, they are skipped when extracting the inscription)
+
+        :rtype: list of int
+    """
     b = inscription[0:2]
     if b.__eq__('4C'):
         return int(reverse(inscription[2:4]), 16), 4
@@ -287,6 +426,15 @@ def length_reader(inscription:str)->int:
 
 ##zjistí typ inscriptions a uloží ho do správného souboru
 def save_inscription(type:str, inscription:str, result_dir:str)->None:
+    """
+    This function evaluates the inscription type and saves it to the correct file
+        
+        :param type str: Data inscription type - the file type for data storage depends on it
+        :param inscription str: Inscription data to save to file
+        :param result_dir str: The path to the folder where the inscription file should be saved (absolute/relative - preferred) - entered when starting the program in the console
+
+        :returns: None
+    """
     if type.__eq__('6170706C69636174696F6E2F6A617661736372697074'): #application/javascript
         save_file("js", bytes.fromhex(inscription), result_dir) 
     if type.__eq__('6170706C69636174696F6E2F6A736F6E'): #application/json
@@ -336,11 +484,27 @@ def save_inscription(type:str, inscription:str, result_dir:str)->None:
         save_file("txt", data, result_dir) 
     
 def save_file(suffix:str, data:bytes, result_dir:str)->None:
+    """
+    This function saves the file containing the inscription
+        
+        :param suffix str: Suffix of the file in which the data will be stored
+        :param data str: Inscription data to save to file
+        :param result_dir str: The path to the folder where the inscription file should be saved (absolute/relative - preferred) - entered when starting the program in the console
+
+        :returns: None
+    """
     with open(result_dir + '/inscription.' + suffix, 'wb') as file:
             file.write(data)
 
 def what_to_find()->list:
-    parser = argparse.ArgumentParser(description='Extract inxcription from block')
+    """
+    This function, using argparse, loads the necessary data entered into the terminal when the application is started and returns for their subsequent use
+
+        :returns: A list containing 4 values. In this order - the block hash of the block that contains the inscription, the hash of the transaction that contains the inscription, the path to the folder that contains the blkXXXX.dat files and the path to the folder where the inscription is to be stored
+
+        :rtype: list of strings
+    """
+    parser = argparse.ArgumentParser(description='Extract inscription from block')
 
     parser.add_argument('-blkHash', required=True, help="hash of block with inscription transaction (required)")
     parser.add_argument('-txHash', required=True, help="transaction hash of transaction with inscription (required)")
@@ -356,6 +520,12 @@ def what_to_find()->list:
     return [args.blkHash.upper(), args.txHash.upper(), DIR, args.resDir]
  
 def main():
+    """
+    The main function, which sequentially calls individual sub-parts while the program is running. At the same time, exception catching is performed at this level
+
+        :returns: None
+
+    """
     try:
         coordinates = what_to_find() ##list blockhash, transaction hash
         whereIsBlock = find_block(coordinates[0], coordinates[2]) ## list nazev souboru .blk ve kterem je hlevany blok, pozice kde blok zacina (pred magicnumber a size)
