@@ -1,0 +1,5 @@
+
+*.pyc
+*.json
+*.dat
+src/InscriptionsExtractor_win.py
