@@ -6,11 +6,9 @@ from modules import WorkWithInscription
 
 def what_to_find()->list:
     """
-    This function, using argparse, loads the necessary data entered into the terminal when the application is started and returns for their subsequent use
-
-        :returns: A list containing 4 values. In this order - the block hash of the block that contains the inscription, the hash of the transaction that contains the inscription, the path to the folder that contains the blkXXXX.dat files and the path to the folder where the inscription is to be stored
-
-        :rtype: list of strings
+    This function uses argparse to retrieve the necessary data entered into the terminal when the application starts and returns it for later use. It also contains a check whether the entered hash values have the appropriate length
+        Returns:
+            list of strings (list of strings):  A list containing 4 values. In this order - the block hash of the block that contains the inscription, the hash of the transaction that contains the inscription, the path to the folder that contains the blkXXXX.dat files and the path to the folder where the inscription is to be stored
     """
     parser = argparse.ArgumentParser(description='Extract inscription from block')
 
@@ -29,17 +27,24 @@ def what_to_find()->list:
  
 def main():
     """
-    The main function, which sequentially calls individual sub-parts while the program is running. At the same time, exception catching is performed at this level
+    The main function, which sequentially calls individual sub-parts while the program is running. At the same time, exception catching is performed at this level.
+    First, it loads the blockhash and tx hash - the coordinates for finding the inscription from the command line when the program is started. During the run, it creates instances of 3 different objects, which it subsequently works with (block, transaction, inscription)
 
-        :returns: None
+        Returns:
+            None
 
     """
     try:
         coordinates = what_to_find() ##list blockhash, transaction hash
-        whereIsBlock = WorkWithBlock.find_block(coordinates[0], coordinates[2]) ## list nazev souboru .blk ve kterem je hlevany blok, pozice kde blok zacina (pred magicnumber a size)
-        whereIsTransactionWitness = WorkWithTransaction.find_transaction(whereIsBlock[0], whereIsBlock[1], coordinates[1], coordinates[2]) ##najde zacatek transakce
-        finalInscription = WorkWithInscription.find_inscription(whereIsBlock[0], whereIsTransactionWitness[0], whereIsTransactionWitness[1], coordinates[2])
-        WorkWithInscription.save_inscription(finalInscription[0], finalInscription[1], coordinates[3])
+        block = WorkWithBlock.Block()
+        block.find_block(coordinates[0], coordinates[2]) ## list nazev souboru .blk ve kterem je hlevany blok, pozice kde blok zacina (pred magicnumber a size)
+        
+        transaction = WorkWithTransaction.Transaction()
+        transaction.find_transaction(block.inFile, block.startAtPosition, coordinates[1], coordinates[2]) ##najde zacatek transakce
+
+        inscription = WorkWithInscription.Inscription()
+        inscription.find_inscription(block.inFile, transaction.witnessStartAtPosition, transaction.inCount, coordinates[2])
+        inscription.save_inscription(coordinates[3])
     except Exception as e:
         print(str(e))
 

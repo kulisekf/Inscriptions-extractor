@@ -1,6 +1,21 @@
 from enum import Enum
 
 class BitcoinOP(Enum):
+    """
+    This is a class that inherits from Enum. It contains a list of individual OP_CODEs and their hexadecimal values.
+    The methods of this class are used to convert from hexadecimal to OP_CODE names and vice versa.
+    
+    Attributes
+    ----------
+        None
+
+    Methods
+    -------
+        convert_byte_to_op(self: object, hex: str) -> str:
+            classmethod - Convert hex byte representation of OP_CODE to OP_CODE name   
+        convert_op_to_byte(self: object, op_code: str) -> str:
+            classmethod - Convert OP_CODE name  to hex byte representation of OP_CODE
+    """
     OP_0 = "00"
     OP_PUSHDATA1 = "4c"
     OP_PUSHDATA2 = "4d"
@@ -113,18 +128,42 @@ class BitcoinOP(Enum):
     OP_INVALIDOPCODE = "ff"
 
     @classmethod
-    def convert_byte_to_op(self, byte) -> str:
+    def convert_byte_to_op(self: object, hex: str) -> str:
+        """
+        This is a class method that accepts a hex representation of a byte and returns it in the form of an OP_CODE string            
+
+        Parameters
+        ----------
+            self (object) : since this is a class method, there is no need to create an instance for the call. Can be called with -> BitcoinOP.convert_byte_to_op()
+            hex (str) : Hex representation of the OP_CODE value for evaluation in string form
+            
+        Returns
+        -------
+            OP_CODE name (str) : OP_CODE name of input hex byte
+        """
         try:
-            op_code = BitcoinOP(byte).name
+            op_code = BitcoinOP(hex).name
             return op_code
         except ValueError:
-            if int(byte) >= 1 and int(byte) <= 75:
-                return "OP_PUSHBYTES_" + byte
+            if int(hex) >= 1 and int(hex) <= 75:
+                return "OP_PUSHBYTES_" + hex
             else:
                 return BitcoinOP.OP_INVALIDOPCODE.name
     
     @classmethod
-    def convert_op_to_byte(self, op_code) -> str:
+    def convert_op_to_byte(self: object, op_code: str) -> str:
+        """
+        This is a class method that accepts the hexadecimal representation of a byte as a string and also returns a string containing the hexadecimal value
+
+        Parameters
+        ----------
+            self (object) : since this is a class method, there is no need to create an instance for the call. Can be called with -> BitcoinOP.convert_op_to_byte()
+            op_code (str) : OP_CODE name for subsequent evaluation
+            
+        Returns
+        -------
+            OP_CODE value (str) : hex byte value in string of input OP_CODE name
+        """
         try:
             byte = BitcoinOP[op_code]
             return byte.value
@@ -137,6 +176,22 @@ class BitcoinOP(Enum):
             return BitcoinOP.OP_INVALIDOPCODE.value
 
 class InscriptionFileType(Enum):
+    """
+    This is a class that inherits from Enum. Contains a list of individual file suffixes and their hexadecimal representation within the inscription type.
+    The methods of this class are used to convert from a simple file suffix to an inscriptions standard type and vice versa    
+    
+    Attributes
+    ----------
+        None
+
+    Methods
+    -------
+        convert_hexType_to_suffix(self: object, hexCode: str) -> str:
+            classmethod - Convert hex byte representation of inscription file type to file type suffix   
+        convert_suffix_to_hexType(self: object, suffix: str) -> str:
+            classmethod - Convert file type suffix to hex byte representation hex byte representation of inscription
+    """
+
     js = "6170706C69636174696F6E2F6A617661736372697074"
     json = "6170706C69636174696F6E2F6A736F6E"
     pdf = "6170706C69636174696F6E2F706466"
@@ -161,9 +216,41 @@ class InscriptionFileType(Enum):
     webm = "766964656F2F7765626D"
 
     @classmethod
-    def convert_hexType_to_suffix(self, hexCode) -> str:
+    def convert_hexType_to_suffix(self: object, hexCode: str) -> str:
+        """
+        This is a class method that accepts the hexadecimal representation of a inscription type as a string and also returns a string containing the file suffix value
+
+        Parameters
+        ----------
+            self (object) : since this is a class method, there is no need to create an instance for the call. Can be called with -> InscriptionFileType.convert_hexType_to_suffix()
+            hexCode (str) : hex representation in string format defining the inscription type
+            
+        Returns
+        -------
+            suffix (str) : suffix of the file to save the inscription belonging to the given type or value Error
+        """
         try:
             op_code = InscriptionFileType(hexCode)
             return op_code.name
+        except ValueError:
+            return "Error"
+        
+    @classmethod
+    def convert_suffix_to_hexType(self: object, suffix: str) -> str:
+        """
+        This is a class method that accepts the suffix of file and return a string contain hex representation of inscription type of the given suffix
+
+        Parameters
+        ----------
+            self (object) : since this is a class method, there is no need to create an instance for the call. Can be called with -> InscriptionFileType.convert_suffix_to_hexType()
+            suffix (str) : suffix of the given file type with inscription
+            
+        Returns
+        -------
+            hex inscription type (str) : hex representation of the given media type according to the inscription standard
+        """
+        try:
+            suffix = BitcoinOP[suffix]
+            return suffix.value
         except ValueError:
             return "Error"

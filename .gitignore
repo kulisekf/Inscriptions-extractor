@@ -3,3 +3,6 @@
 *.json
 *.dat
 src/InscriptionsExtractor_win.py
+src/podstatné zdroje.txt
+src/test data.txt
+src/test.py

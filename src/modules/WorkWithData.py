@@ -6,13 +6,15 @@ def read_bytes(file:BufferedReader,n:int,byte_order:str = 'L')->str:
     """
     This function reads the specified number of bytes and also changes the notation from little-endian to classic by default
 
-        :param BufferedReader file: File to read data (bytes)
-        :param int n: Number of bytes to read
-        :param str byte_order: Specifies endianity - default "L" (little-endian)
-
-        :returns: read bytes in big-endian (classical) notation format
-
-        :rtype: str
+    Parameters
+    ----------
+        file (BufferedReader) : File to read data (bytes)
+        n (int) : Number of bytes to read
+        byte_order (str) : Specifies endianity - default "L" (little-endian)
+        
+    Returns
+    -------
+        data (str) : read bytes in big-endian (classical) notation format
     """
     data = file.read(n)
     if byte_order == 'L':
@@ -25,11 +27,13 @@ def read_varint(file:BufferedReader)->str:
     """
     This function reads one byte of data and decides whether this byte contains the searched data, or whether it contains information on how many subsequent bytes contain the searched data, which it then reads
 
-        :param BufferedReader file: File to read data (bytes)
-
-        :returns: value stored in one or more (2, 4, 8) bytes of data
-
-        :rtype: str
+    Parameters
+    ----------
+        file (BufferedReader) : File to read data (bytes)
+        
+    Returns
+    -------
+        data (str) : value stored in one or more (2, 4, 8) bytes of data
     """
     b = file.read(1)
     bInt = int(b.hex(),16)
@@ -50,12 +54,15 @@ def read_varint(file:BufferedReader)->str:
 def read_varint_transaction(file:BufferedReader)->str:
     """
     This function works in the same way as the read_variant() function, with the only difference that it needs to store and return all the data it works with - it is used, for example, to calculate the transaction hash
+
+    Parameters
+    ----------
+        file (BufferedReader) : File to read data (bytes)
         
-        :param BufferedReader file: File to read data (bytes)
-
-        :returns: all the loaded data that the function worked with
-
-        :rtype: str
+    Returns
+    -------
+        tmpHex (str) : value stored in one or more (2, 4, 8) bytes of data
+        tmpB (str) : if the first byte that was read did not contain a value, but information about how many bytes contained data - it contains the value of this byte, otherwise it is empty
     """
     b = file.read(1)
     tmpB = b.hex().upper()
@@ -77,13 +84,15 @@ def read_varint_transaction(file:BufferedReader)->str:
 ##z little-endian stringu udělá big-endian
 def reverse(input:str)->str:
     """
-    This function turns a little-endian string into big-endian        
+    This function turns a little-endian string into big-endian    
+
+    Parameters
+    ----------
+        input (str) : Data sequence to change endianity
         
-        :param str input: Data sequence to change endianity
-
-        :returns: Data with changed endianness
-
-        :rtype: str
+    Returns
+    -------
+        Res (str) : Data with changed endianness
     """
     L = len(input)
     if (L % 2) != 0:
@@ -101,12 +110,14 @@ def reverse(input:str)->str:
 def hash_of_data(data:str)->str:
     """
     This function calculates a 2x sha256 hash of the input data     
+
+    Parameters
+    ----------
+        data (str) : input data whose hash is to be calculated
         
-        :param str data: input data whose hash is to be calculated
-
-        :returns: 2x sha256 hash of input data
-
-        :rtype: str
+    Returns
+    -------
+        data (str) : 2x sha256 hash of input data
     """
     ##vypocita hash bloku (jeho hlavicky - veliká 80 bajtů)
     data = bytes.fromhex(data)
@@ -118,13 +129,17 @@ def hash_of_data(data:str)->str:
 
 def save_file(suffix:str, data:bytes, result_dir:str)->None:
     """
-    This function saves the file containing the inscription
-        
-        :param suffix str: Suffix of the file in which the data will be stored
-        :param data str: Inscription data to save to file
-        :param result_dir str: The path to the folder where the inscription file should be saved (absolute/relative - preferred) - entered when starting the program in the console
+    This function saves the file containing the inscription     
 
-        :returns: None
+    Parameters
+    ----------
+        suffix (str) : Suffix of the file in which the data will be stored
+        data (str) : Inscription data to save to file
+        result_dir (str) : The path to the folder where the inscription file should be saved (absolute/relative - preferred) - entered when starting the program in the console
+        
+    Returns
+    -------
+        None
     """
     with open(result_dir + '/inscription.' + suffix, 'wb') as file:
             file.write(data)
