@@ -1,5 +1,6 @@
-from modules import WorkWithData
 from io import BufferedReader
+from workWithData import Data
+
 
 class Transaction:
     """
@@ -68,21 +69,21 @@ class Transaction:
         self.fileName = fileName
         f = open(DIR + fileName,'rb') ##otevře správný soubor
         f.seek(int(zacatekBloku) + 8 + 80) ##přeskočí na začátek bloku, následně za magicnumber a size a nakonec za celou hlavičku - následuje pro čtení hodnota tx count
-        txCount = int(WorkWithData.read_varint(f),16)##zjisti mnozstvi transakci v bloku - převede z hexadecimal na decimal
+        txCount = int(Data.read_varint(f),16)##zjisti mnozstvi transakci v bloku - převede z hexadecimal na decimal
         for k in range(txCount):
             self.startAtPosition = f.tell()
-            RawTX = WorkWithData.reverse(WorkWithData.read_bytes(f,4)) ## obsahuje TX version number
+            RawTX = Data.reverse(Data.read_bytes(f,4)) ## obsahuje TX version number
             tmpHex = self.tx_in_count(f) ##zjistí počet vstupů do transakce, vyhodnotí případný segwit flag a zároveň vrátí i hodnotu pro RawTX
-            RawTX += WorkWithData.reverse(tmpHex)
+            RawTX += Data.reverse(tmpHex)
 
             ## projdou se všechny vstupy a přidají se do RawTX
             for m in range(self.inCount):
                 RawTX += self.read_tx_in(f)
 
             ## zde se zjišťuje počet outputů
-            tmpHex, tmpB = WorkWithData.read_varint_transaction(f)
+            tmpHex, tmpB = Data.read_varint_transaction(f)
             self.outputCount = int(tmpHex,16)
-            RawTX += WorkWithData.reverse(tmpHex + tmpB)
+            RawTX += Data.reverse(tmpHex + tmpB)
 
             ## projdou se všechny výstupy transakce
             for m in range(self.outputCount):
@@ -93,8 +94,8 @@ class Transaction:
             if self.witness == True:
                 self.skip_witness(f)
 
-            RawTX += WorkWithData.reverse(WorkWithData.read_bytes(f,4)) ##hodnota Lock time, reversnutá a přidaná
-            self.txHash = WorkWithData.hash_of_data(RawTX)        ## z Rawtx udělá její hash
+            RawTX += Data.reverse(Data.read_bytes(f,4)) ##hodnota Lock time, reversnutá a přidaná
+            self.txHash = Data.hash_of_data(RawTX)        ## z Rawtx udělá její hash
 
             ## zjistí, zda nalezl správnou transakci
             if txHash == self.txHash:
@@ -165,9 +166,9 @@ class Transaction:
         """
 
         for m in range(self.inCount): ##pro každý vstup
-            WitnessLength = int(WorkWithData.read_varint(f),16) ##zjistí počet prvků ve witness
+            WitnessLength = int(Data.read_varint(f),16) ##zjistí počet prvků ve witness
             for j in range(WitnessLength): #pro každý prvek ve witness
-                WitnessItemLength = int(WorkWithData.read_varint(f),16) ##zjistí délku prvku
+                WitnessItemLength = int(Data.read_varint(f),16) ##zjistí délku prvku
                 f.seek(WitnessItemLength, 1) ##přeskočí celý witness prvek
 
     #projde celý vstup transakce a vrátí jeho data pro použití v RawTX
@@ -184,21 +185,21 @@ class Transaction:
         -------
             RawTX (str) : uses all data using this method - used for build RawTX
         """
-        tmpHex = WorkWithData.read_bytes(f,32) ## txid (hash) předchozí tx
-        RawTX = WorkWithData.reverse(tmpHex)
+        tmpHex = Data.read_bytes(f,32) ## txid (hash) předchozí tx
+        RawTX = Data.reverse(tmpHex)
         
-        tmpHex = WorkWithData.read_bytes(f,4) ## index výstupu předchozí tx            
-        RawTX += WorkWithData.reverse(tmpHex)
+        tmpHex = Data.read_bytes(f,4) ## index výstupu předchozí tx            
+        RawTX += Data.reverse(tmpHex)
         ##v předsegwitových tx je na tomto místě podpisový skript, zde prázdné - je ve witness -> načte tuto část
-        tmpHex, tmpB = WorkWithData.read_varint_transaction(f)
+        tmpHex, tmpB = Data.read_varint_transaction(f)
             
         scriptLength = int(tmpHex,16)
         tmpHex = tmpHex + tmpB
-        RawTX += WorkWithData.reverse(tmpHex)
-        tmpHex = WorkWithData.read_bytes(f,scriptLength,'B')
+        RawTX += Data.reverse(tmpHex)
+        tmpHex = Data.read_bytes(f,scriptLength,'B')
         RawTX += tmpHex
         ## sequence - časový zámek/RBF
-        tmpHex = WorkWithData.read_bytes(f,4,'B')
+        tmpHex = Data.read_bytes(f,4,'B')
         RawTX += tmpHex
         return RawTX
 
@@ -216,16 +217,16 @@ class Transaction:
             RawTX (str) : uses all data using this method - used for build RawTX
         """
         ## value v sat
-        tmpHex = WorkWithData.read_bytes(f,8)
+        tmpHex = Data.read_bytes(f,8)
         ## následující část čte scriptPubKey
-        RawTX = WorkWithData.reverse(tmpHex)
+        RawTX = Data.reverse(tmpHex)
         tmpHex = ''
-        tmpHex, tmpB = WorkWithData.read_varint_transaction(f)
+        tmpHex, tmpB = Data.read_varint_transaction(f)
 
         scriptLength = int(tmpHex,16)
         tmpHex = tmpHex + tmpB
-        RawTX = RawTX + WorkWithData.reverse(tmpHex)
-        tmpHex = WorkWithData.read_bytes(f,scriptLength,'B')
+        RawTX = RawTX + Data.reverse(tmpHex)
+        tmpHex = Data.read_bytes(f,scriptLength,'B')
         RawTX = RawTX + tmpHex
         tmpHex = ''
         return RawTX

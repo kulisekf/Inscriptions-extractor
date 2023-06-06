@@ -1,5 +1,5 @@
-from modules import enums
-from modules import WorkWithData
+from workWithData import Data
+from enums import BitcoinOP
 
 class ScriptEvaluation:
     """
@@ -141,7 +141,7 @@ class ScriptEvaluation:
         """
         byte_num = pow(2, OP_byte - 76) #zjistí, kolik následujících bajtů obsahuje informaci, kolik bajtů obsahuje data - 1, 2 nebo 4
 
-        segment_length = int(WorkWithData.reverse(string[2:byte_num*2+2]), 16) #přečte bajty, které říkají, kolik bajtů obsahuje hodnotu - je třeba změnit endianitu
+        segment_length = int(Data.reverse(string[2:byte_num*2+2]), 16) #přečte bajty, které říkají, kolik bajtů obsahuje hodnotu - je třeba změnit endianitu
 
         self.stack.append(string[2 + byte_num * 2 :segment_length*2 + byte_num*2 + 2]) #pushne na stack data
         return string[2 + segment_length*2 + byte_num*2:] #vrátí zbytek witness bez přečtených dat
@@ -166,4 +166,4 @@ class ScriptEvaluation:
         elif OP_byte >= 76 and OP_byte <= 78:
             return self.OP_PUSHDATA(string, OP_byte)
         else:
-            return eval("self." + enums.BitcoinOP.convert_byte_to_op(OP_byteHex) + "('" + string + "')")
+            return eval("self." + BitcoinOP.convert_byte_to_op(OP_byteHex) + "('" + string + "')")

@@ -1,6 +1,6 @@
-from modules import WorkWithData
-from modules import enums
-from modules import Script
+from workWithData import Data
+from enums import InscriptionFileType
+from script import ScriptEvaluation
 
 class Inscription:
     """
@@ -58,16 +58,16 @@ class Inscription:
         inscription = ""
         ## pro každý ze vstupů - bude nejspíše 1, ale sichr je sichr
         for m in range(inCount):
-            tmpHex = WorkWithData.read_varint(f)
+            tmpHex = Data.read_varint(f)
 
             #přeskočí první část witness - nepotřebuji, myslím že pubkey
-            WitnessItemLength = int(WorkWithData.read_varint(f),16)
+            WitnessItemLength = int(Data.read_varint(f),16)
             f.seek(WitnessItemLength, 1)
 
             ##načtu 2. část witness
-            tmpHex = WorkWithData.read_varint(f)
+            tmpHex = Data.read_varint(f)
             WitnessItemLength = int(tmpHex,16)
-            tmpHex = WorkWithData.reverse(WorkWithData.read_bytes(f,WitnessItemLength))
+            tmpHex = Data.reverse(Data.read_bytes(f,WitnessItemLength))
             f.close()
             inscription += tmpHex
             tmpHex = ''
@@ -96,7 +96,7 @@ class Inscription:
         -------
             None
         """
-        data = Script.ScriptEvaluation()
+        data = ScriptEvaluation()
 
         while len(inscription) != 2:
             inscription = data.Execute_opcode(inscription)
@@ -118,9 +118,9 @@ class Inscription:
         -------
             None
         """
-        suffix = enums.InscriptionFileType.convert_hexType_to_suffix(self.type)
+        suffix = InscriptionFileType.convert_hexType_to_suffix(self.type)
         if suffix.__eq__('Error'):
             data = bytes("!!!unknown type of content!!!\n\ntype: ",'UTF-8') + bytes.fromhex(self.type) + bytes("\n\ninscription data: " + self.data,'UTF-8')
-            WorkWithData.save_file("txt", data, result_dir) 
+            Data.save_file("txt", data, result_dir) 
         else:
-            WorkWithData.save_file(suffix, bytes.fromhex(self.data), result_dir) 
+            Data.save_file(suffix, bytes.fromhex(self.data), result_dir) 

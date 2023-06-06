@@ -1,6 +1,6 @@
 import os
 import sys
-from modules import WorkWithData
+from workWithData import Data
 
 class Block:
     """
@@ -65,9 +65,9 @@ class Block:
             while f.tell() != fSize and velikostBloku != 0: #velikost bloku pro to, že poslední soubor (ten do kterého se aktuálně zapisují nové bloky) mi to bez tohoto pravidla procházelo i po přečtení nejaktuálnějšího bloku - jednoduše to skákalo po 8 bajtech
                 self.startAtPosition = f.tell()
                 f.seek(self.startAtPosition + 4) ##přeskočí magic number            
-                velikostBloku = int(WorkWithData.read_bytes(f,4), base=16)##načte velikost bloku - konvertovaná do bajtů
-                hlavickaBloku = WorkWithData.read_bytes(f,80,'B')
-                self.blockHash = WorkWithData.hash_of_data(hlavickaBloku) #vypočítá hash nalezeného bloku
+                velikostBloku = int(Data.read_bytes(f,4), base=16)##načte velikost bloku - konvertovaná do bajtů
+                hlavickaBloku = Data.read_bytes(f,80,'B')
+                self.blockHash = Data.hash_of_data(hlavickaBloku) #vypočítá hash nalezeného bloku
                 if self.blockHash.__eq__(blockHash):
                     f.close()
                     return

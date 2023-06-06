@@ -1,7 +1,7 @@
 import argparse
-from modules import WorkWithBlock
-from modules import WorkWithTransaction
-from modules import WorkWithInscription
+from workWithBlock import Block
+from workWithInscription import Inscription
+from workWithTransaction import Transaction
 
 
 def what_to_find()->list:
@@ -27,22 +27,20 @@ def what_to_find()->list:
  
 def main():
     """
-    The main function, which sequentially calls individual sub-parts while the program is running. At the same time, exception catching is performed at this level.
-    First, it loads the blockhash and tx hash - the coordinates for finding the inscription from the command line when the program is started. During the run, it creates instances of 3 different objects, which it subsequently works with (block, transaction, inscription)
+    The main function, which sequentially calls individual sub-parts while the program is running. At the same time, exception catching is performed at this level
 
-        Returns:
-            None
+        :returns: None
 
     """
     try:
         coordinates = what_to_find() ##list blockhash, transaction hash
-        block = WorkWithBlock.Block()
+        block = Block()
         block.find_block(coordinates[0], coordinates[2]) ## list nazev souboru .blk ve kterem je hlevany blok, pozice kde blok zacina (pred magicnumber a size)
         
-        transaction = WorkWithTransaction.Transaction()
+        transaction = Transaction()
         transaction.find_transaction(block.inFile, block.startAtPosition, coordinates[1], coordinates[2]) ##najde zacatek transakce
 
-        inscription = WorkWithInscription.Inscription()
+        inscription = Inscription()
         inscription.find_inscription(block.inFile, transaction.witnessStartAtPosition, transaction.inCount, coordinates[2])
         inscription.save_inscription(coordinates[3])
     except Exception as e:
