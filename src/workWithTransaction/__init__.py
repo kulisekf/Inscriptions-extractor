@@ -6,40 +6,19 @@ class Transaction:
     """
     this class is used to work with transaction. 
     
-    Attributes
-    ----------
-        txHash (str) : transaction hash
-        witnessStartAtPosition (int) : the position at which the data within the file begins
-        fileName (str) : the name of the file in which the transaction is stored
-        startAtPosition (str) : the position in the file at which the transaction starts
-        witness (bool) : identifies whether the transaction contains a witness
-        inCount (int) : identifies the number of inputs to the transaction
-        outputCount (int) : identifies the number of outputs from the transaction
-
-    Methods
-    -------
-        find_transaction(self: object, fileName:str, zacatekBloku:str, txHash:str, DIR:str)->list:
-            This method goes through the individual transactions of the block and tries to find the specified transaction   
-        tx_in_count(self: object, f:BufferedReader)->str:
-            This method detects the number of inputs to the transaction, evaluates any segwit flag and at the same time returns the value for RawTX
-        skip_witness(self: object, f:BufferedReader)->None:
-            This method skips the entire witness part of the data when traversing the transaction
-        read_tx_in(self: object, f:BufferedReader)->str:
-            This method goes through the entire transaction input and returns its data for use in RawTX
-        read_tx_out(self: object, f:BufferedReader)->str:
-            This method goes through the entire transaction output and returns its data for use in RawTX
+        :ivar txHash str: transaction hash
+        :ivar witnessStartAtPosition int: the position at which the data within the file begins
+        :ivar fileName str: the name of the file in which the transaction is stored
+        :ivar startAtPosition str: the position in the file at which the transaction starts
+        :ivar witness bool: identifies whether the transaction contains a witness
+        :ivar inCount int: identifies the number of inputs to the transaction
+        :ivar outputCount int: identifies the number of outputs from the transaction
     """
     def __init__(self: object) -> None:
         """
         Constructs necessary attributes for the object.           
 
-        Parameters
-        ----------
-            self (object) : class object
-
-        Returns
-        -------
-            None
+            :param self object: class object
         """
         self.txHash = None
         self.witnessStartAtPosition = None
@@ -54,17 +33,14 @@ class Transaction:
     def find_transaction(self: object, fileName:str, zacatekBloku:str, txHash:str, DIR:str)->list:
         """
         This method will try to find the specified transaction. The attempt does not find it, it returns an error text, if it finds it and the transaction contains a witness, it terminates the execution of the method and stores the location of the witness and the number of inputs in the object instance, if the witness transaction does not contain it, it returns an error text        
-        Parameters
-        ----------
-            self (object) : class object
-            fileName (str) : The name of the file where the transaction should be located
-            zacatekBloku (str) : The position in the blkXXX.dat file where the data of the block in which the transaction should be located begins
-            txHash (str) : Hash of the searched transaction - it is entered when starting the program within the console
-            DIR (str) : The path to the folder that contains the blkXXXX.dat files (absolute/relative - preferred) - it is entered when starting the program within the console
-
-        Returns
-        -------
-            None - Return is here to end method execution
+        
+            :param fileName str: The name of the file where the transaction should be located
+            :param zacatekBloku str: The position in the blkXXX.dat file where the data of the block in which the transaction should be located begins
+            :param txHash str: Hash of the searched transaction - it is entered when starting the program within the console
+            :param DIR str: The path to the folder that contains the blkXXXX.dat files (absolute/relative - preferred) - it is entered when starting the program within the console
+            :param self object: class object
+            
+            :returns: None - Return is here to end method execution
         """
         self.fileName = fileName
         f = open(DIR + fileName,'rb') ##otevře správný soubor
@@ -112,14 +88,11 @@ class Transaction:
         """
         This method detects the number of inputs to the transaction, evaluates any segwit flag, and at the same time returns a value for building RawTX  
         
-        Parameters
-        ----------
-            self (object) : class object
-            f (BufferedReader) : File to read data (bytes)
+            :param self object: class object
+            :param f BufferedReader: File to read data (bytes)
 
-        Returns
-        -------
-            tmpHex (str) : all the loaded data that the function worked with
+            :returns: all the loaded data that the function worked with
+            :rtype: str 
         """
         self.witness = False
         b = f.read(1)
@@ -155,14 +128,8 @@ class Transaction:
         """
         This method skips the entire witness part of the data when going through the transaction. From the object instance, it works with the inCount value, which lets it know how many blocks of witness data it contains        
         
-        Parameters
-        ----------
-            self (object) : class object
-            f (BufferedReader) : The file from which the data is read
-
-        Returns
-        -------
-            None
+            :param self object: class object
+            :param f BufferedReade: The file from which the data is read
         """
 
         for m in range(self.inCount): ##pro každý vstup
@@ -176,14 +143,12 @@ class Transaction:
         """
         This method loops through the entire transaction input and returns its data for build RawTX          
         
-        Parameters
-        ----------
-            self (object) : class object
-            f (BufferedReader) : The file from which the data is read
+            :param self object: class object
+            :param f BufferedReader: The file from which the data is read
 
-        Returns
-        -------
-            RawTX (str) : uses all data using this method - used for build RawTX
+            :returns: uses all data using this method - used for build RawTX
+
+            :rtype: str
         """
         tmpHex = Data.read_bytes(f,32) ## txid (hash) předchozí tx
         RawTX = Data.reverse(tmpHex)
@@ -207,14 +172,12 @@ class Transaction:
         """
         This method loops through the entire transaction output and returns its data for build RawTX          
         
-        Parameters
-        ----------
-            self (object) : class object
-            f (BufferedReader) : The file from which the data is read
+            :param self object: class object
+            :param f BufferedReader: The file from which the data is read
 
-        Returns
-        -------
-            RawTX (str) : uses all data using this method - used for build RawTX
+            :returns: uses all data using this method - used for build RawTX
+
+            :rtype: str
         """
         ## value v sat
         tmpHex = Data.read_bytes(f,8)

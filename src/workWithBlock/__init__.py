@@ -6,30 +6,17 @@ class Block:
     """
     this class is used to work with Bitcoin block. 
     
-    Attributes
-    ----------
-        inFile (str) : the name of the XXXX.blk file that contains the given block
-        startAtPosition (int) : represents the position at which the block starts in the given file
-        blockHash (str) : block hash
+        :ivar inFile str: the name of the XXXX.blk file that contains the given block
+        :ivar startAtPosition int: represents the position at which the block starts in the given file
+        :ivar blockHash str: block hash
 
-    Methods
-    -------
-        find_block(self: object, blockHash:str, DIR:str)->list:
-            This method goes through the blkXXXX.dat files and searches them for the required block based on the block hash value   
-        taproot_activated_block(blockHash:str)->None:
-            During the file search based on the block hash, it checks if the Taproot activation block has not been reached
     """
     def __init__(self: object) -> None:
         """
         Constructs necessary attributes for the object.           
 
-        Parameters
-        ----------
-            self (object) : class object
+            :param self object: class object
 
-        Returns
-        -------
-            None
         """
         self.inFile = None
         self.startAtPosition = None
@@ -39,15 +26,9 @@ class Block:
         """
         Method parameters contain values to search for the block in XXXX.blk files. This method will use these values and go through each file until it finds a matching block (based on the block hash). Subsequently, it terminates its activity, with the block hash, the file in which the block is located and the position at which the block starts within the file remaining within the instance of the object.   
 
-        Parameters
-        ----------
-            self (object) : class object
-            blockHash (str) : Hash of the block to be found by the function - it is entered when starting the program within the console
-            DIR (str) : The path to the folder that contains the blkXXXX.dat files (absolute/relative - preferred) - it is entered when starting the program within the console
-            
-        Returns
-        -------
-            None
+            :param self object: class object
+            :param blockHash str: Hash of the block to be found by the function - it is entered when starting the program within the console
+            :param DIR str: The path to the folder that contains the blkXXXX.dat files (absolute/relative - preferred) - it is entered when starting the program within the console
         """
 
         ##nacte slozku a nasledne vsechny soubory do listu
@@ -81,13 +62,7 @@ class Block:
         """
         This function checks whether the found block corresponds to the first taproot block - inscriptions are possible thanks to taproot. If the block has been reached, a warning will be written to the console and the program will wait for the user to enter a value representing whether the search should be stopped or not
 
-        Parameters
-        ----------
-            blockHash (str) : hash of the block to be compared to the taproot activating block hash
-            
-        Returns
-        -------
-            None
+            :param blockHash str: hash of the block to be compared to the taproot activating block hash
         """
         if blockHash == '0000000000000000000687BCA986194DC2C1F949318629B44BB54EC0A94D8244':
             print("Block 709,632 reached (Taproot activated block), continue search? (Y/N)")

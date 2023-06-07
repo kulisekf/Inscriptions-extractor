@@ -5,25 +5,6 @@ class Data:
     """
     This class contains methods for working with data, for example reverse within a string by bytes, reading a certain number of bytes with data from a file, etc.
     All methods are @classmethod so no class instance is needed.
-
-    Attributes
-    ----------
-        None
-
-    Methods
-    -------
-        read_bytes(self, file:BufferedReader,n:int,byte_order:str = 'L')->str:
-            This method reads a certain number of bytes, changes the notation from little-endian to big-endian
-        read_varint(self, file:BufferedReader)->str:
-            this method reads a byte of data, but a byte of data can mean several things - this method decides whether the byte itself is the resulting desired value that it returns, or whether it indicates how many subsequent bytes contain the value and only then reads this value
-        read_varint_transaction(self, file:BufferedReader)->str:
-            works the same as the previous method. With the difference that you need to save and return all the data - used to calculate the transaction hash
-        reverse(self, input:str)->str:
-            makes a little-endian string big-endian
-        hash_of_data(self, data:str)->str:
-            calculates the hash of the input data
-        save_file(self, suffix:str, data:bytes, result_dir:str)->None:
-            saves the file with the appropriate suffix and data to the specified location
     """
     ##přečte určitý počet bajtů, změní little-endian notaci na normální
     @classmethod
@@ -31,16 +12,13 @@ class Data:
         """
         This method reads the specified number of bytes and also changes the notation from little-endian to classic by default
 
-        Parameters
-        ----------
-            self (object) : since this is a class method, there is no need to create an instance for the call. Can be called with -> Data.read_bytes(...)
-            file (BufferedReader) : File to read data (bytes)
-            n (int) : Number of bytes to read
-            byte_order (str) : Specifies endianity - default "L" (little-endian)
+            :param self object: since this is a class method, there is no need to create an instance for the call. Can be called with -> Data.read_bytes(...)
+            :param file BufferedReader: File to read data (bytes)
+            :param n int: Number of bytes to read
+            :param byte_order str: Specifies endianity - default "L" (little-endian)
             
-        Returns
-        -------
-            data (str) : read bytes in big-endian (classical) notation format
+            :returns: read bytes in big-endian (classical) notation format
+            :rtype: str
         """
         data = file.read(n)
         if byte_order == 'L':
@@ -54,14 +32,11 @@ class Data:
         """
         This function reads one byte of data and decides whether this byte contains the searched data, or whether it contains information on how many subsequent bytes contain the searched data, which it then reads
 
-        Parameters
-        ----------
-            self (object) : since this is a class method, there is no need to create an instance for the call. Can be called with -> Data.read_varint(...)
-            file (BufferedReader) : File to read data (bytes)
+            :param self object: since this is a class method, there is no need to create an instance for the call. Can be called with -> Data.read_varint(...)
+            :param file BufferedReader: File to read data (bytes)
             
-        Returns
-        -------
-            data (str) : value stored in one or more (2, 4, 8) bytes of data
+            :returns: value stored in one or more (2, 4, 8) bytes of data
+            :rtype: str
         """
         b = file.read(1)
         bInt = int(b.hex(),16)
@@ -84,15 +59,15 @@ class Data:
         """
         This function works in the same way as the read_variant() function, with the only difference that it needs to store and return all the data it works with - it is used, for example, to calculate the transaction hash
 
-        Parameters
-        ----------
-            self (object) : since this is a class method, there is no need to create an instance for the call. Can be called with -> Data.read_varint_transaction(...)
-            file (BufferedReader) : File to read data (bytes)
+            :param self object: since this is a class method, there is no need to create an instance for the call. Can be called with -> Data.read_varint_transaction(...)
+            :param file BufferedReader: File to read data (bytes)
             
-        Returns
-        -------
-            tmpHex (str) : value stored in one or more (2, 4, 8) bytes of data
-            tmpB (str) : if the first byte that was read did not contain a value, but information about how many bytes contained data - it contains the value of this byte, otherwise it is empty
+            :returns: value stored in one or more (2, 4, 8) bytes of data
+            :rtype: str
+            
+            :returns: if the first byte that was read did not contain a value, but information about how many bytes contained data - it contains the value of this byte, otherwise it is empty
+            :rtype: str
+        
         """
         b = file.read(1)
         tmpB = b.hex().upper()
@@ -117,14 +92,11 @@ class Data:
         """
         This function turns a little-endian string into big-endian    
 
-        Parameters
-        ----------
-            self (object) : since this is a class method, there is no need to create an instance for the call. Can be called with -> Data.reverse(...)
-            input (str) : Data sequence to change endianity
-            
-        Returns
-        -------
-            Res (str) : Data with changed endianness
+            :param self object: since this is a class method, there is no need to create an instance for the call. Can be called with -> Data.reverse(...)
+            :param input str: Data sequence to change endianity
+
+            :returns: Data with changed endianness
+            :rtype: str
         """
         L = len(input)
         if (L % 2) != 0:
@@ -144,14 +116,11 @@ class Data:
         """
         This function calculates a 2x sha256 hash of the input data     
 
-        Parameters
-        ----------
-            self (object) : since this is a class method, there is no need to create an instance for the call. Can be called with -> Data.hash_of_data(...)
-            data (str) : input data whose hash is to be calculated
-            
-        Returns
-        -------
-            data (str) : 2x sha256 hash of input data
+            :param self object: since this is a class method, there is no need to create an instance for the call. Can be called with -> Data.hash_of_data(...)
+            :param data str: input data whose hash is to be calculated
+
+            :returns: 2x sha256 hash of input data
+            :rtype: str
         """
         ##vypocita hash bloku (jeho hlavicky - veliká 80 bajtů)
         data = bytes.fromhex(data)
@@ -166,16 +135,10 @@ class Data:
         """
         This function saves the file containing the inscription     
 
-        Parameters
-        ----------
-            self (object) : since this is a class method, there is no need to create an instance for the call. Can be called with -> Data.save_file(...)
-            suffix (str) : Suffix of the file in which the data will be stored
-            data (str) : Inscription data to save to file
-            result_dir (str) : The path to the folder where the inscription file should be saved (absolute/relative - preferred) - entered when starting the program in the console
-            
-        Returns
-        -------
-            None
+            :param self object: since this is a class method, there is no need to create an instance for the call. Can be called with -> Data.save_file(...)
+            :param suffix str: Suffix of the file in which the data will be stored
+            :param data str: Inscription data to save to file
+            :param result_dir str: The path to the folder where the inscription file should be saved (absolute/relative - preferred) - entered when starting the program in the console
         """
         with open(result_dir + '/inscription.' + suffix, 'wb') as file:
                 file.write(data)

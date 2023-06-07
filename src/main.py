@@ -7,8 +7,10 @@ from workWithTransaction import Transaction
 def what_to_find()->list:
     """
     This function uses argparse to retrieve the necessary data entered into the terminal when the application starts and returns it for later use. It also contains a check whether the entered hash values have the appropriate length
-        Returns:
-            list of strings (list of strings):  A list containing 4 values. In this order - the block hash of the block that contains the inscription, the hash of the transaction that contains the inscription, the path to the folder that contains the blkXXXX.dat files and the path to the folder where the inscription is to be stored
+
+        :returns: A list containing 4 values. In this order - the block hash of the block that contains the inscription, the hash of the transaction that contains the inscription, the path to the folder that contains the blkXXXX.dat files and the path to the folder where the inscription is to be stored
+    
+        :rtype: list of strings 
     """
     parser = argparse.ArgumentParser(description='Extract inscription from block')
 
@@ -28,9 +30,6 @@ def what_to_find()->list:
 def main():
     """
     The main function, which sequentially calls individual sub-parts while the program is running. At the same time, exception catching is performed at this level
-
-        :returns: None
-
     """
     try:
         coordinates = what_to_find() ##list blockhash, transaction hash
