@@ -19,7 +19,7 @@ Deploy and run
       - -txHash TYHASH -> transaction hash of transaction with inscription
    - allows input of 2 optional parameters:
       - -blkDir BLKDIR -> path to the block folder (default: './.bitcoin/blocks')
-      - -resDir RESDIR -> path to the folder for file save (defpĹ™Ă­ault: './')
+      - -resDir RESDIR -> path to the folder for file save (defpříault: './')
    - example:
       - *python3 main.py -blkHash 00000000000000000000b1bdfdb4a667d57b5e5890eebaea608f7bcc0fe9bd63 -txHash 52ed0a201a5b3bde92fe485e8550a78dd03dac71e7488eb61c1e8b5b4a779deb*
       - *python3 main.py -blkDir ./blocks -resDir ./result -blkHash 00000000000000000000b1bdfdb4a667d57b5e5890eebaea608f7bcc0fe9bd63 -txHash 52ed0a201a5b3bde92fe485e8550a78dd03dac71e7488eb61c1e8b5b4a779deb*
@@ -55,4 +55,5 @@ Indices and tables
 
 * :ref:`genindex`
 * :ref:`modindex`
-* :ref:`search`
+	
+

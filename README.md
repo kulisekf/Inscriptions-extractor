@@ -36,3 +36,16 @@
 - thanks to the division into several logical parts, the program can be easily modified to serve, for example, as a data parser or to search for other, specific values within a transaction or block
 - individual parts and functions contain a large number of comments that help to understand the function of a part of the code and also what data a certain part works with
     - NOTICE: all comments are in the Czech language
+
+## Generatin documentation
+- The documentation is generated using the Sphinx tool.
+    - if you don't have Sphinx, install it using (for Ubuntu): pip install sphinx sphinx_rtd_theme
+- Then go to the docs folder
+    - cd docs
+- and start the documentation generation
+    - make html
+- Now the documentation is generated. The resulting HTML files are generated in the _build folder
+
+### !!WARNING!! A few changes need to be made to generate the documentation correctly !!WARNING!!:
+    1. adding an empty __init__.py file to the src folder - despite the fact that it is not a folder with a module, this step currently needs to be performed for correct documentation generation
+    2. for some reason (wip, temporary solution), all *.py files need to comment out the imports related to the modules that are included in the project (for example, within the main.py file lines 2-4, within the workWithTransaction module line 2 etc. )
